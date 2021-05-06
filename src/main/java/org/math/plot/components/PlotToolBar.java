@@ -139,6 +139,7 @@ public class PlotToolBar extends JToolBar {
 
                 public void actionPerformed(ActionEvent e) {
                     plotCanvas.resetBase();
+		    plotCanvas.ResetZoom();
                 }
             });
 

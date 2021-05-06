@@ -294,6 +294,16 @@ public class Axis implements Plotable, BaseDependant, Editable {
 		origin = _origin;
 		resetBase();
 	}
+	public double[] getEnd() {
+		return end;
+
+        }
+
+	public double[] getOrigin() {
+		return origin ;
+
+	}
+
 
 	/**
 	 * When called out of the axis class, resets the light labels to their

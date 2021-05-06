@@ -30,6 +30,7 @@ public class LegendPanel extends JPanel implements ComponentListener {
     private int maxWidth;
     JPanel container;
     private int inset = 5;
+    private boolean enableRepaint = false;
 
     public LegendPanel(PlotPanel _plotPanel, int _orientation) {
         plotPanel = _plotPanel;
@@ -49,6 +50,19 @@ public class LegendPanel extends JPanel implements ComponentListener {
         setLayout(new GridBagLayout());
 
         add(container);
+    }
+    
+    public void setEnableRepaint(boolean enable){
+        enableRepaint =enable;
+    }
+    
+    @Override
+    public void repaint(){
+        if(enableRepaint)
+        {
+            super.repaint();
+            //System.out.println("REPAINT");
+        }
     }
 
     public void updateLegends() {

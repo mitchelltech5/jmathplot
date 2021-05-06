@@ -6,6 +6,7 @@ import org.math.plot.render.AWTDrawer;
 import org.math.plot.utils.FastMath;
 import javax.swing.JFrame;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Image;
@@ -59,6 +60,9 @@ public abstract class PlotCanvas extends JPanel implements MouseListener, MouseM
     public LegendPanel linkedLegendPanel;
     public LinkedList<Plot> plots;
     public LinkedList<Plotable> objects;
+    private boolean enableRepaint;
+    private int[] MCurrent = null;
+    private int[] MClick = null;
 
     // ///////////////////////////////////////////
     // ////// Constructor & inits ////////////////
@@ -242,7 +246,8 @@ public abstract class PlotCanvas extends JPanel implements MouseListener, MouseM
             return;
         }
         resetBase();
-        repaint();
+        if(enableRepaint)
+            repaint();
     }
 
     public void setAutoBounds() {
@@ -269,6 +274,7 @@ public abstract class PlotCanvas extends JPanel implements MouseListener, MouseM
             base.includeInBounds(Array.max(ploti.getBounds()));
         }
         resetBase();
+        if(enableRepaint)
         repaint();
     }
 
@@ -295,6 +301,7 @@ public abstract class PlotCanvas extends JPanel implements MouseListener, MouseM
             base.includeInBounds(axe, Array.max(ploti.getBounds())[axe]);
         }
         resetBase();
+        if(enableRepaint)
         repaint();
     }
 
@@ -343,18 +350,26 @@ public abstract class PlotCanvas extends JPanel implements MouseListener, MouseM
         repaint();
     }
     boolean adjustBounds = true;
+    private boolean updateLegend = true;
 
     public void setAdjustBounds(boolean adjust) {
         adjustBounds = adjust;
+    }
+    
+    public void setEnableRepaint(boolean enable){
+        enableRepaint = enable;
     }
 
     public boolean getAdjustBounds() {
         return adjustBounds;
     }
 
+    public void setUpdateLegend(boolean value){
+        updateLegend = value;
+    }
     public int addPlot(Plot newPlot) {
         plots.add(newPlot);
-        if (linkedLegendPanel != null) {
+        if (linkedLegendPanel != null && updateLegend) {
             linkedLegendPanel.updateLegends();
         }
         if (plots.size() == 1) {
@@ -363,7 +378,8 @@ public abstract class PlotCanvas extends JPanel implements MouseListener, MouseM
             if (adjustBounds) {
                 includeInBounds(newPlot);
             } else {
-                repaint();
+                if(enableRepaint)
+                    repaint();
             }
         }
         return plots.size() - 1;
@@ -404,14 +420,15 @@ public abstract class PlotCanvas extends JPanel implements MouseListener, MouseM
 
     public void removePlot(int I) {
         plots.remove(I);
-        if (linkedLegendPanel != null) {
+        if (linkedLegendPanel != null && updateLegend) {
             linkedLegendPanel.updateLegends();
         }
         if (plots.size() != 0) {
             if (adjustBounds) {
                 setAutoBounds();
             } else {
-                repaint();
+                if(enableRepaint)
+                    repaint();
             }
         }
 
@@ -428,6 +445,14 @@ public abstract class PlotCanvas extends JPanel implements MouseListener, MouseM
             }
         }
 
+    }
+    @Override
+    public void repaint(){
+        if(enableRepaint)
+        {
+            super.repaint();
+            //System.out.println("REPAINT");
+        }
     }
 
     public void removeAllPlots() {
@@ -708,6 +733,8 @@ public abstract class PlotCanvas extends JPanel implements MouseListener, MouseM
         repaint();
     }
 
+    
+    
     public void mousePressed(MouseEvent e) {
         //System.out.println("PlotCanvas.mousePressed");
 		/*
@@ -774,6 +801,13 @@ public abstract class PlotCanvas extends JPanel implements MouseListener, MouseM
          */
         mouseCurent[0] = e.getX();
         mouseCurent[1] = e.getY();
+        
+        MCurrent= new int[2];
+        MClick= new int[2];
+        MCurrent[0] = e.getX();
+        MCurrent[1] = e.getY();
+        MClick[0]=mouseClick[0];
+        MClick[1]=mouseClick[1];
         e.consume();
         switch (ActionMode) {
             case ZOOM:
@@ -795,6 +829,31 @@ public abstract class PlotCanvas extends JPanel implements MouseListener, MouseM
         dragging = false;
     }
 
+    public void ResetZoom(){
+        MClick=null;
+        MCurrent=null;
+    }
+    
+    
+    public void reZoom(){
+        if(MClick !=null && MCurrent !=null)
+        switch (ActionMode) {
+            case ZOOM:
+                if (FastMath.abs(MCurrent[0] - MClick[0]) > 10 && FastMath.abs(MCurrent[1] - MClick[1]) > 10) {
+                    int[] origin = {FastMath.min(mouseClick[0], MCurrent[0]), FastMath.min(MClick[1], MCurrent[1])};
+                    double[] ratio = {FastMath.abs((double) (MCurrent[0] - MClick[0]) / (double) getWidth()),
+                                      FastMath.abs((double) (MCurrent[1] - MClick[1]) / (double) getHeight())
+                    };
+                    draw.dilate(origin, ratio);
+                    drawRect = null;
+                    repaint();
+                } else {
+                    drawRect = null;
+                    repaint();
+                }
+                break;
+        }
+    }
     public void mouseClicked(MouseEvent e) {
         //System.out.println("PlotCanvas.mouseClicked");
 
